@@ -1,42 +1,64 @@
 #include <iostream>
 #include <cstring>
 #include <cstdlib>
+#include <vector>
 #include <mpi.h>
+#include <CmdLineArgParser.h>
+//#include "SeapodymCohort.h"
 
 using std::cout;
-void help(char* argv0);
-int OptionToCode(char* Option);
 int seapodym_cohort(const char* parfile, const int cmp_regime, const bool reset_buffers);
-bool read_memory_options(int argc, char** argv, const bool grad_calc);
 
 int main(int argc, char** argv) {
 
 	// Initialization of MPI
 	int err;
 	err = MPI_Init(&argc, &argv);
+	int numWorkers;
+	MPI_Comm_size(MPI_COMM_WORLD, &numWorkers);
+	int workerId;
+	MPI_Comm_rank(MPI_COMM_WORLD, &workerId);
+
+    CmdLineArgParser cmdLine;
+	cmdLine.set("-s", std::string("initparfile.xml"), "Input file with parameters");
+
+	// These could come from the input file (?)
+    cmdLine.set("-na", 1, "Number of age groups");
+
+	// Parse the command line arguments
+    bool success = cmdLine.parse(argc, argv);
+    bool help = cmdLine.get<bool>("-help") || cmdLine.get<bool>("-h");
+    if (!success) {
+        if (workerId == 0) {
+			std::cerr << "Error parsing command line arguments." << std::endl;
+			cmdLine.help();
+		}
+        MPI_Finalize();
+        return 1;
+    }
+    if (help) {
+        if (workerId == 0) cmdLine.help();
+        MPI_Finalize();
+        return 1;
+    }
+
+
+	
 	
 	
 	int cmp_regime = -1;
 	bool reset_buffers = false;
-	int k=1;
-	char *cmdLineOption = argv[k];
-	//Note, other options are yet to be integrated from the seapodym_coupled code
-	//Currently only simulation, optimization and Hessian calculation are possible
-	cmp_regime = OptionToCode(cmdLineOption);
-	if (cmp_regime==-1) k=0;
-	if (cmp_regime==-3) help(argv[0]);
-	if (argc < k+2) {
-		cout << "Too few parameters... \n"; 
-		help(argv[0]);
-	}
-	if ((cmp_regime==-1 && argc>2) || (cmp_regime>=0 && argc>3)){
-		bool grad_calc = false;
-		if (cmp_regime == -1 || cmp_regime == 2)
-			grad_calc = true;
-		reset_buffers = read_memory_options(argc, argv, grad_calc);	
-	}
 
-	err = seapodym_cohort(argv[argc-1],cmp_regime,reset_buffers);
+	// Assign the cohorts to the workers
+
+
+	//std::vector<SeapodymCohort*> cohorts;
+	std::vector<int> cohort_steps;
+	std::vector<int> cohort_ids;
+	std::vector<int> cohort_numsteps;
+
+	const char* parfile = cmdLine.get<std::string>("-s").c_str();
+	err = seapodym_cohort(parfile, cmp_regime, reset_buffers);
 	if (err != 0) {
 		cout << "Error in seapodym_cohort: " << err << "\n";
 		// This will abort all processes in the MPI_COMM_WORLD communicator
@@ -49,36 +71,6 @@ int main(int argc, char** argv) {
 	return 0;
 }
 
-
-int OptionToCode(char* op) {
-
-	const int N = 12;
-	const char *cmdop[N] = {"-s","-p","-H","-t","-h","-v","--simulation","--likelihood-projection","--hessian","--taylor-test","--help","--version"};
-	int cmpCode[N] = {0,1,2,4,-3,-2,0,1,2,4,-3,-2};
-	for (int i=0; i<N; i++)
-		if (strcmp(op,cmdop[i])==0){
-			if (cmpCode[i]==-2) {
-				cout << "SEAPODYM 4.0 without fishing for parameter estimation using population density \n";
-				cout << "Copyright (C) 2022, SPC, CLS, University of Hawaii.\n";
-				exit(0);
-			}
-			return cmpCode[i];
-		}
-	return -1;//by default - optimization
-}
-
-void help(char* argv0) {
-
-	cout << "Usage:" << argv0 << " [option] parfile \n";
-	cout << "      IMPORTANT!!! If [option] is omitted, then application will start optimization run! \n"; 
-	cout << "Options: \n";
-	cout << "  -h, --help \t\t\t Print this message and exit.\n";
-	cout << "  -H, --hessian \t\t Compute Hessian matrix.\n";
-	cout << "  -t, --taylor-test   \t\t Perform Taylor derivative test with central differencing.\n";
-	cout << "  -s, --simulation \t\t Run simulation without optimization.\n";
-	cout << "  -v, --version \t\t Print version number and exit.\n";
-	exit(0);
-}
 
 
 
