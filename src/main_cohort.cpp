@@ -42,28 +42,32 @@ int main(int argc, char** argv) {
         return 1;
     }
 
+	// Assign the cohorts to the workers
+	int num_age_groups = cmdLine.get<int>("-na");
+	// Worker Id to list of cohort Ids
+	std::vector< std::vector<int> >cohorts_per_worker(numWorkers);
+	for (auto ia = 0; ia < num_age_groups; ++ia) {
+		// Initially, the cohort Id is the same as the age index
+		cohorts_per_worker[ia % numWorkers].push_back(ia);
+	}
 
-	
-	
+	// The cohort Ids for this worker
+	std::vector<int> cohort_ids = cohorts_per_worker[workerId];
+
 	
 	int cmp_regime = -1;
 	bool reset_buffers = false;
-
-	// Assign the cohorts to the workers
-
-
-	//std::vector<SeapodymCohort*> cohorts;
-	std::vector<int> cohort_steps;
-	std::vector<int> cohort_ids;
-	std::vector<int> cohort_numsteps;
-
 	const char* parfile = cmdLine.get<std::string>("-s").c_str();
-	err = seapodym_cohort(parfile, cmp_regime, reset_buffers);
-	if (err != 0) {
-		cout << "Error in seapodym_cohort: " << err << "\n";
-		// This will abort all processes in the MPI_COMM_WORLD communicator
-		MPI_Abort(MPI_COMM_WORLD, err);
+
+	for (auto& cohort_id : cohort_ids) {
+		err = seapodym_cohort(parfile, cmp_regime, reset_buffers);
+		if (err != 0) {
+			cout << "Error in seapodym_cohort: " << err << "\n";
+			// This will abort all processes in the MPI_COMM_WORLD communicator
+			MPI_Abort(MPI_COMM_WORLD, err);
+		}
 	}
+
 
 	// Finalization of MPI
 	err = MPI_Finalize();
