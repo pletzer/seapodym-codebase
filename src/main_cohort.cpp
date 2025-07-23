@@ -36,8 +36,14 @@ int main(int argc, char** argv) {
 		reset_buffers = read_memory_options(argc, argv, grad_calc);	
 	}
 
-	// Finalization of MPI
 	err = seapodym_cohort(argv[argc-1],cmp_regime,reset_buffers);
+	if (err != 0) {
+		cout << "Error in seapodym_cohort: " << err << "\n";
+		// This will abort all processes in the MPI_COMM_WORLD communicator
+		MPI_Abort(MPI_COMM_WORLD, err);
+	}
+
+	// Finalization of MPI
 	err = MPI_Finalize();
 
 	return 0;
