@@ -58,7 +58,8 @@ int seapodym_cohort(const char* parfile, int cmp_regime, const bool reset_buffer
 	}*/
 
 	//read parfile
-	SeapodymCohort sc(parfile, cohort_id);
+	SeapodymCohort* scp = new SeapodymCohort(parfile, cohort_id);
+	SeapodymCohort& sc = *scp;
 
 	//iniitalize variables of optimization
 	const int nvar = sc.nvarcalc();
@@ -169,6 +170,8 @@ int seapodym_cohort(const char* parfile, int cmp_regime, const bool reset_buffer
 	double total_elapsed_time = (double)(time2-time0) / 60.0;
 	cout << "\ntotal time: " << total_elapsed_time << " minutes" << endl;
 //exit(1);
+
+	delete scp;
 
 	return 0;
 }
