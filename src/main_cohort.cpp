@@ -4,10 +4,10 @@
 #include <vector>
 #include <mpi.h>
 #include <CmdLineArgParser.h>
-//#include "SeapodymCohort.h"
+#include "SeapodymCohort.h"
 
 using std::cout;
-int seapodym_cohort(const char* parfile, const int cmp_regime, const bool reset_buffers);
+SeapodymCohort* seapodym_cohort(const char* parfile, const int cmp_regime, const bool reset_buffers);
 
 int main(int argc, char** argv) {
 
@@ -59,12 +59,17 @@ int main(int argc, char** argv) {
 	bool reset_buffers = false;
 	const char* parfile = cmdLine.get<std::string>("-s").c_str();
 
+	std::vector<SeapodymCohort*> cohorts;
 	for (auto& cohort_id : cohort_ids) {
-		err = seapodym_cohort(parfile, cmp_regime, reset_buffers);
-		if (err != 0) {
-			cout << "Error in seapodym_cohort: " << err << "\n";
-			// This will abort all processes in the MPI_COMM_WORLD communicator
-			MPI_Abort(MPI_COMM_WORLD, err);
+		SeapodymCohort* scp = seapodym_cohort(parfile, cmp_regime, reset_buffers);
+		cohorts.push_back(scp);
+	}
+
+	// Clean up the cohorts
+	for (auto& scp : cohorts) {
+		if (scp) {
+			// currently this can causes a segmentation fault
+			//delete scp; // Free the memory allocated for the cohort
 		}
 	}
 

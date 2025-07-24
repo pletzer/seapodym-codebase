@@ -22,7 +22,7 @@ This is the main routine that calls upper-level functions such as
    f) computing 2d projection of likelihood function the pair of parameters (should be specified in parfile).
 */
 
-int seapodym_cohort(const char* parfile, int cmp_regime, const bool reset_buffers)
+SeapodymCohort* seapodym_cohort(const char* parfile, int cmp_regime, const bool reset_buffers)
 {
 	time_t time_sec;
 	time(&time_sec);
@@ -58,7 +58,8 @@ int seapodym_cohort(const char* parfile, int cmp_regime, const bool reset_buffer
 	}*/
 
 	//read parfile
-	SeapodymCohort sc(parfile);
+	SeapodymCohort* scp = new SeapodymCohort(parfile);
+	SeapodymCohort& sc = *scp;
 
 	//iniitalize variables of optimization
 	const int nvar = sc.nvarcalc();
@@ -174,7 +175,7 @@ int seapodym_cohort(const char* parfile, int cmp_regime, const bool reset_buffer
 	cout << "\ntotal time: " << total_elapsed_time << " minutes" << endl;
 //exit(1);
 
-	return 0;
+	return scp; // return pointer to SeapodymCohort object
 }
 
 /*///1. Option for computing likelihood projection in 2D parametric space.
