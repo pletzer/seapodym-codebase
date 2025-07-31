@@ -54,7 +54,41 @@ int main(int argc, char** argv) {
 
 	// Initialize the cohorts for each age group assigned to this worker
 	int cohort_id = 0;
-	SeapodymCohort* scp = seapodym_cohort(parfile, cmp_regime, reset_buffers, cohort_id, gs);
+	//SeapodymCohort* scp = seapodym_cohort(parfile, cmp_regime, reset_buffers, cohort_id, gs);
+
+	//read parfile
+	SeapodymCohort* scp = new SeapodymCohort(parfile, cohort_id);
+	SeapodymCohort& sc = *scp;
+
+	//initialize variables of optimization
+	const int nvar = sc.nvarcalc();
+	independent_variables x(1, nvar);
+	adstring_array x_names(1,nvar);
+
+	sc.xinit(x, x_names);
+	cout << "Total number of variables: " << nvar << '\n'<<'\n';
+
+	//initialization of simulation
+	sc.prerun_model();
+
+	//the function is invoked in the coupled simulation only
+	string tempparfile = "tempparfile.xml";
+	string newparfile  = "newparfile.xml";
+
+	//after minimization is finished one simulation will 
+	//be run with estimated parameters; outputs will be saved
+	gradient_structure::set_NO_DERIVATIVES();
+
+	sc.run_cohort((dvar_vector)x, true);
+
+	sc.write(newparfile.c_str());
+
+	remove(tempparfile.c_str());
+
+	//writes new parameters on the screen
+	sc.param->outp_param(x_names,nvar);
+
+
 	scp->OnRunFirstStep();
 	delete scp;
 
