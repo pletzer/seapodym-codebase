@@ -33,6 +33,13 @@ public:
 	void OnRunFirstStep();
 	void ReadAll();
 
+	void initialize_cohort(const dvar_vector& x, const bool writeoutputfiles = false) {
+		InitializeCohort(x, writeoutputfiles);
+	}
+
+	int nbt_cohort;
+
+
 private:
 	int dtau;
 	int nbt_before_first_recruitment; 	
@@ -46,7 +53,6 @@ private:
 	int jday; 
 	int nbstoskip; 
 	int age;
-	int nbt_cohort;
 	int cohort_id;
 	int age_start;
 	int t_start;
@@ -69,10 +75,10 @@ private:
 	int pop_built;
 
 	double OnRunCohort(dvar_vector x, const bool writeoutputfiles);
-	void InitializeCohort(dvar_vector& x, const bool writeoutputfiles);
+	void InitializeCohort(const dvar_vector& x, const bool writeoutputfiles);
 
 public:
-	void stepForward(bool writeoutputfiles);
+	void stepForward(bool writeoutputfiles = false);
 	// Remaining to implement
 	void setStateFromArray(const std::vector<double>& array);
 	std::vector<double> getArrayFromState();

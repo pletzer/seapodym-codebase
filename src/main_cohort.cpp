@@ -48,6 +48,7 @@ int main(int argc, char** argv) {
 	gradient_structure gs(gs_var_buffer);
 	int out_hessian = 0;
 	gradient_structure::set_USE_FOR_HESSIAN(out_hessian);
+	gradient_structure::set_NO_DERIVATIVES();
 
 	// cohorts handled by this worker
 	const char* parfile = cmdLine.get<std::string>("-s").c_str();
@@ -63,33 +64,26 @@ int main(int argc, char** argv) {
 	//initialize variables of optimization
 	const int nvar = sc.nvarcalc();
 	independent_variables x(1, nvar);
-	adstring_array x_names(1,nvar);
-
+	adstring_array x_names(1, nvar);
 	sc.xinit(x, x_names);
-	cout << "Total number of variables: " << nvar << '\n'<<'\n';
 
 	//initialization of simulation
 	sc.prerun_model();
 
-	//the function is invoked in the coupled simulation only
-	string tempparfile = "tempparfile.xml";
-	string newparfile  = "newparfile.xml";
-
-	//after minimization is finished one simulation will 
-	//be run with estimated parameters; outputs will be saved
-	gradient_structure::set_NO_DERIVATIVES();
-
-	sc.run_cohort((dvar_vector)x, true);
-
-	sc.write(newparfile.c_str());
-
-	remove(tempparfile.c_str());
-
-	//writes new parameters on the screen
-	sc.param->outp_param(x_names,nvar);
+	//sc.run_cohort((dvar_vector)x);
+	//sc.OnRunCohort((dvar_vector)x, false);
+	sc.initialize_cohort(x, false);
 
 
-	scp->OnRunFirstStep();
+	//scp->OnRunFirstStep((dvar_vector)x, true);
+	for (;scp->t_count <= scp->nbt_cohort; scp->t_count++)
+	{
+		scp->stepForward();
+	} 
+	// end of simulation loop
+
+
+
 	delete scp;
 
 	return 0;

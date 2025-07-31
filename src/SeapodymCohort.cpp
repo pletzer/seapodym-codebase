@@ -5,7 +5,7 @@
 
 
 
-void SeapodymCohort::InitializeCohort(dvar_vector& x, const bool writeoutputfiles) 
+void SeapodymCohort::InitializeCohort(const dvar_vector& x, const bool writeoutputfiles) 
 {
 	t_count = t_start;
 	age = age_start;
